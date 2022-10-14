@@ -1,0 +1,3 @@
+load this file in spark context
+spark training ongoing
+hadoop is big data
