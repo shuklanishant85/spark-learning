@@ -1,0 +1,130 @@
+JVM--------------Java Virtual Machine------------Interprets java byte code to runtime instruction.
+
+JRE----------------Java Runtime Environment--------------JVM+System Libraries
+
+The platform independence of Java is achieved through a platform dependent JRE.
+
+JVM contains the instruction set, register set,stack and heap definitions of the host operating system.
+
+When scala code is compiled , it is converted into a java byte code.
+
+procedural programming-------------- top down approach----------main function calls the subroutines and other functions
+examples: C,Pascal
+
+Object Oriented Progamming:
+
+Every real world component is modelled as an object.
+
+Each real world component has state and behaviour.
+
+state-----------data
+behaviour----function/method.
+
+Examples: C++,Java,C#
+
+functional programming:
+
+A function acts as an expression.
+
+A function can accept another function as argument and return another function as a value.
+Also it supports anonymous functions(functions without names).
+
+Examples: Scala,Groovy,Python
+
+
+Spark Cluster----------Collection of spark nodes .
+
+
+Maven:
+
+Maven is a popular java based build tool.
+In the java community forum, there is a common agreement that all open source libraries are hosted in
+global maven repository(mvnrepository.com).
+Each library is identified by a dependency.
+
+Each dependency has 3 attributes namely group-id,artifact-id and version.
+
+When we add the dependency in the maven config file(pom.xml), the respectively library jar files get downloaded to the local maven 
+repository(~/.m2/repository)
+
+Parallelizing a collection is done with a function called sc.parallelize()
+
+Spark automatically partitions RDDs ad distributes the partitions across different nodes.
+
+Basics of Partitioning:
+
+Every node in a spark cluster contains one or more partitions.
+The number of partitoins used in spark is configurable and having too few(causing less concurrency) and too many(causing task scheduling to take
+more time than actual execution time) partitions is not good.
+
+By default, it is set to the total number of cores on all the executor nodes.
+
+Partitions in spark do not span multiple machines.
+
+
+
+map(function)
+
+class RDD[T]}{
+	RDD[T1] map(func: T=>T1) //the parameter function will be invoked for each element of the rdd.
+
+
+}
+
+map function applies the parameter function to each element of the RDD.
+
+The RDD returned from map function will contain the transformed elements.
+
+The returned RDD will have the same number of elements as the base RDD but the type of the returned RDD may be different.
+
+filter:
+
+class RDD[T]}{
+	RDD[T] filter(func: T=>Boolean) //the parameter function will be invoked for each element of the rdd.
+
+}
+filter function applies the parameter function to each element of the RDD and the returned RDD will have only the elements for which the filter 
+function returns true.
+The returned RDD's type will be same as the base RDD and the number of elements may not be same as the original RDD.
+
+flatMap():
+
+similar to map() except that it flattens the data at last.
+The parameter function passed to flatMap returns a collection for each element. So the result will become 2 dimensional. Since flatMap()
+flattens the data atlast, it still remains as 1 dimensional.
+
+class RDD[T]}{
+	RDD[T1] flatMap(func: T=>Collection[T1]) //the parameter function will be invoked for each element of the rdd.
+
+}
+
+DAG-----------Directed Acyclic Graph
+
+
+Worker:
+
+A worker provides cpu,memory and storage resources to a spark application.The workers run a spark application as distributed processes
+on a set of cluster nodes.
+
+Cluster Manager:
+Spark uses the cluster manager to acquire resources for executing a job in the cluster. It manages the computing resources across a 
+cluster of nodes. The cluster manager process is also  called a master process.
+
+Examples:
+Spark standalone cluster manager
+Apache Mesos
+Hadoop Yarn
+
+Driver Program:
+
+A driver program is an application that uses spark as a library.
+It provides the data processing code that spark executes on the worker nodes.
+
+Spark-shell terminal window is an example of driver program.
+Also a java app with main method having spark code is a driver program.
+
+spark-submit also starts a driver program.
+
+Learning Spark by Oreilley publications.
+
+

@@ -1,0 +1,453 @@
+  https://drive.google.com/drive/folders/1PM_1Mxqzf1BoKFRvr0ENMQSJ3hwAIV5k?usp=sharing
+  
+  
+c    rdd1.getNumPartitions
+    
+    rdd1.collect
+    
+     
+     scala> val rdd2=rdd1.repartition(100)
+rdd2: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[54] at repartition at <console>:25
+
+scala> rdd2.collect
+  
+  
+  
+  rdd2.toDebugString
+  
+  scala> val rdd3=rdd2.repartition(10)
+rdd3: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[58] at repartition at <console>:25
+
+scala> rdd3.toDebugString
+
+rdd3.collect
+
+jar tvf c:\jarfiles\Second.jar
+
+spark-class org.apache.spark.deploy.master.Master
+
+http://localhost:8080/
+
+
+spark-class org.apache.spark.deploy.worker.Worker   master-url
+
+
+
+spark-submit --class amex_learning.PROJECT.RDDTest1 --master spark://172.20.0.131:7077 c:\jarfiles\Second.jar
+
+ val rdd1=sc.parallelize(List(("a",1),("b",2),("a",5),("c",5),("b",6),("a",3)))
+ 
+ scala> val rdd2=rdd1.groupByKey()
+rdd2: org.apache.spark.rdd.RDD[(String, Iterable[Int])] = ShuffledRDD[60] at groupByKey at <console>:25
+
+scala> rdd2.collect
+
+scala> val t=(3,6,"ddd",23.55)
+t: (Int, Int, String, Double) = (3,6,ddd,23.55)
+
+scala> t._1
+res38: Int = 3
+
+scala> t._3
+res39: String = ddd
+
+
+scala> val rdd1=sc.parallelize(List(("a",1),("b",2),("a",5),("c",5),("b",6),("a",3)))
+rdd1: org.apache.spark.rdd.RDD[(String, Int)] = ParallelCollectionRDD[62] at parallelize at <console>:24
+
+scala> val rdd2=rdd1.map(t=>(t._1,t._2*2))
+rdd2: org.apache.spark.rdd.RDD[(String, Int)] = MapPartitionsRDD[63] at map at <console>:27
+
+scala> rdd2.collect
+
+scala> val rdd3=rdd2.reduceByKey((a,b)=>a+b)
+rdd3: org.apache.spark.rdd.RDD[(String, Int)] = ShuffledRDD[64] at reduceByKey at <console>:27
+
+scala> rdd3.collect
+
+val rdd3=rdd2.reduceByKey((x,y)=>{
+     println("adding "+x+" with "+y)
+      x+y
+      })
+rdd3.collect
+
+
+user2322    Rakesh Sharma
+user3222    Suresh David
+user2148    Ram Kumar
+
+scala> val rdd1=sc.textFile("c:/test/users.tsv")
+rdd1: org.apache.spark.rdd.RDD[String] = c:/test/users.tsv MapPartitionsRDD[77] at textFile at <console>:24
+
+scala> rdd1.collect
+res52: Array[String] = Array(user2322   Rakesh Sharma, user3222 Suresh David, user2148  Ram Kumar)
+
+scala> val rdd2=rdd1.map(line=>line.split("\t"))
+rdd2: org.apache.spark.rdd.RDD[Array[String]] = MapPartitionsRDD[78] at map at <console>:25
+
+scala> rdd2.collect
+res53: Array[Array[String]] = Array(Array(user2322, Rakesh Sharma), Array(user3222, Suresh David), Array(user2148, Ram Kumar))
+
+scala> val rdd3=rdd2.map(arr=>(arr(0),arr(1)))
+rdd3: org.apache.spark.rdd.RDD[(String, String)] = MapPartitionsRDD[79] at map at <console>:25
+
+scala> rdd3.collect
+
+
+ rdd1.map(line=>line.split("\t")).map(arr=>(arr(0),arr(1))).collect().foreach(t=>println("key:"+t._1+" value:"+t._2))
+ 
+ 
+ package com.amex.training.sparkcore;
+
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+
+import scala.Tuple2;
+
+public class PairRddTest1 {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkConf conf=new SparkConf();
+        conf.setAppName("pair-rdd-creation-test");
+        conf.setMaster("local[*]");
+        JavaSparkContext sc=new JavaSparkContext(conf);
+        sc.setLogLevel("WARN");
+        
+        JavaRDD<String> rdd1=sc.textFile("c:/test/users.tsv");
+        JavaPairRDD<String, String> rdd2=rdd1.map(line->line.split("\t"))
+                .mapToPair(arr->new Tuple2<String,String>(arr[0], arr[1]));
+        rdd2.collect().forEach(t->System.out.println("key: "+t._1+" value: "+t._2));
+    }
+
+}
+
+
+
+  scala> val numbers=sc.textFile("c:/test/numbers.txt").map(line=>line.toInt)
+numbers: org.apache.spark.rdd.RDD[Int] = MapPartitionsRDD[10] at map at <console>:24
+
+scala> val squares=numbers.map(n=>n*n)
+squares: org.apache.spark.rdd.RDD[Int] = MapPartitionsRDD[11] at map at <console>:25
+
+scala> val sum=squares.reduce((x,y)=>x+y)
+
+
+the cat sat on the mat
+the aardvark sat on the sofa
+
+
+scala> val numbers=sc.textFile("c:/test/numbers.txt").map(line=>line.toInt)
+numbers: org.apache.spark.rdd.RDD[Int] = MapPartitionsRDD[10] at map at <console>:24
+
+scala> val squares=numbers.map(n=>n*n)
+squares: org.apache.spark.rdd.RDD[Int] = MapPartitionsRDD[11] at map at <console>:25
+
+scala> val sum=squares.reduce((x,y)=>x+y)
+sum: Int = 558
+
+scala> val lines=sc.textFile("c:/test/words.txt")
+lines: org.apache.spark.rdd.RDD[String] = c:/test/words.txt MapPartitionsRDD[13] at textFile at <console>:24
+
+scala> val words=lines.flatMap(line=>line.split(" "))
+words: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[14] at flatMap at <console>:25
+
+scala> val wordTupleRdd=words.map(word=>(word,1))
+wordTupleRdd: org.apache.spark.rdd.RDD[(String, Int)] = MapPartitionsRDD[15] at map at <console>:25
+
+scala> val wordCountRdd=wordTupleRdd.reduceByKey((x,y)=>x+y)
+wordCountRdd: org.apache.spark.rdd.RDD[(String, Int)] = ShuffledRDD[16] at reduceByKey at <console>:25
+
+
+
+scala> wordCountRdd.collect.foreach(println)
+
+
+
+package com.amex.training.sparkcore;
+
+import java.util.Arrays;
+
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+
+import scala.Tuple2;
+
+public class WordCountTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkConf conf=new SparkConf();
+        conf.setAppName("wordcount-test");
+        conf.setMaster("local[*]");
+        JavaSparkContext sc=new JavaSparkContext(conf);
+        sc.setLogLevel("WARN");
+        
+        JavaRDD<String> rdd1=sc.textFile("c:/test/words.txt");
+        JavaPairRDD<String, Integer> rdd2=rdd1.flatMap(line->Arrays.asList(line.split(" ")).iterator())
+                .mapToPair(word->new Tuple2<String,Integer>(word, 1));
+        rdd2.reduceByKey((x,y)->x+y).collect().forEach(t->System.out.println("word: "+t._1+
+                " no-of-occurrences: "+t._2));
+    }
+
+}
+
+
+
+  
+  
+  
+  
+  c:\test\users.json
+  
+  
+{"name":"Alice", "pcode":"94304"}
+{"name":"Brayden", "age":30, "pcode":"94304"}
+{"name":"Carla", "age":19, "pcode":"10036"}
+{"name":"Diana", "age":46}
+{"name":"Étienne", "pcode":"94104"}
+
+
+scala> val userDF=spark.read.json("c:/test/users.json")
+userDF: org.apache.spark.sql.DataFrame = [age: bigint, name: string ... 1 more field]
+
+scala> userDF.printSchema
+
+scala> userDF.show
+
+userDF.select("name","age","pcode").show
+
+
+scala> userDF.count
+res7: Long = 5
+
+scala> userDF.take(2)
+res8: Array[org.apache.spark.sql.Row] = Array([null,Alice,94304], [30,Brayden,94304])
+
+scala> userDF.show
+
+
+scala> userDF.show(3)
+
+
+
+scala> userDF.collect
+res11: Array[org.apache.spark.sql.Row] = Array([null,Alice,94304], [30,Brayden,94304], [19,Carla,10036], [46,Diana,null], [null,╔tienne,94104])
+
+scala> userDF.write.csv("c:/testcsv")
+
+
+
+scala> val nameCodeDF=userDF.select("name","pcode")
+nameCodeDF: org.apache.spark.sql.DataFrame = [name: string, pcode: string]
+
+scala> nameCodeDF.show
+
+scala> val seniorDF=userDF.where("age>25")
+seniorDF: org.apache.spark.sql.Dataset[org.apache.spark.sql.Row] = [age: bigint, name: string ... 1 more field]
+
+scala> seniorDF.show
++---+-------+-----+
+|age|   name|pcode|
++---+-------+-----+
+| 30|Brayden|94304|
+| 46|  Diana| null|
++---+-------+-----+
+
+
+scala> val seniorDF=userDF.where("age>25").select("name","age")
+seniorDF: org.apache.spark.sql.DataFrame = [name: string, age: bigint]
+
+scala> seniorDF.show
+
+scala> val someDF=userDF.limit(3)
+someDF: org.apache.spark.sql.Dataset[org.apache.spark.sql.Row] = [age: bigint, name: string ... 1 more field]
+
+scala> someDF.show
+
+<dependencies>
+  <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-sql -->
+<dependency>
+    <groupId>org.apache.spark</groupId>
+    <artifactId>spark-sql_2.12</artifactId>
+    <version>3.1.3</version>
+  
+</dependency>
+  
+  </dependencies>
+  
+  
+  package com.amex.training.sparksql;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+
+public class DataSetTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("dataframe-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        Dataset<Row> ds=spark.read().json("c:/test/users.json");
+        ds.show();
+
+    }
+
+}
+
+c:\test\employee.csv
+
+id,name,designation
+1001,Rakesh,Developer
+1002,Suresh,Accountant
+1008,Amar,Architect
+1009,Ramu,Developer
+1011,Deva,Accountant
+
+
+scala> val df1=spark.read.csv("c:/test/employee.csv")
+df1: org.apache.spark.sql.DataFrame = [_c0: string, _c1: string ... 1 more field]
+
+scala> val df1=spark.read.format("csv").option("header","true").load("c:/test/employee.csv")
+df1: org.apache.spark.sql.DataFrame = [id: string, name: string ... 1 more field]
+
+scala> df1.show
+
+
+userDF.write.format("csv").option("header","true").save("c:/testcsv1")
+
+
+ userDF.write.parquet("c:/testparquet1")
+ 
+ scala> val df=spark.read.parquet("c:/testparquet1")
+df: org.apache.spark.sql.DataFrame = [age: bigint, name: string ... 1 more field]
+
+scala> df.show
+
+
+create a json file called employee.json with the following data:
+
+{"id":1001,"name":"Deva","designation":"Developer"}
+{"id":1002,"name":"Amar","designation":"Accountant"}
+{"id":1003,"name":"Suresh","designation":"Architect"}
+{"id":1004,"name":"Amar","designation":"Developer"}
+
+create a data frame using these data.
+
+select id and name for  all developers  and write them to the directory c:\developers in parquet format
+select id and name for  all architects  and write them to the directory c:\architects in json format
+select id and name for  all accountants  and write them to the directory c:\accountants in csv format including headers.
+
+package com.amex.training.sparksql;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+
+public class DataSetTestWithDiffFormat {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("dataframe-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        Dataset<Row> empDS=spark.read().format("csv").option("header",true)
+                
+                .load("c:/test/employee.csv");
+        Dataset<Row> developers=empDS.where("designation='Developer'").select("id","name");
+        developers.write().save("c:/developers");
+        empDS.where("designation='Accountant'").select("id","name").write().format("csv")
+                .option("header", true).save("c:/accountants");
+        
+        empDS.where("designation='Architect'").select("id","name").write().format("json").
+        save("c:/architects");
+
+
+    }
+
+}
+
+
+val list=List(StructField("emp_id",IntegerType,true),StructField("emp_name",StringType,true),
+      StructField("designation",StringType,true))
+      
+      
+      
+      val empSchema=StructType(list)
+      
+      val empDF=spark.read.option("format","csv").option("header",true).schema(empSchema).load("c:/test/employee.csv")
+      
+      scala> val empDF=spark.read.format("csv").option("header",true).schema(empSchema).load("c:/test/employee.csv")
+empDF: org.apache.spark.sql.DataFrame = [emp_id: int, emp_name: string ... 1 more field]
+
+scala> empDF.show
+
+
+      package com.amex.training.sparksql;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
+
+public class DataSetWithUserDefinedSchema {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("dataframe-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        Dataset<Row> empDS=spark.read().format("csv").option("header",true)
+                .schema(employeeSchema())
+                .load("c:/test/employee.csv");
+        
+        empDS.show();
+
+
+    }
+    
+    static StructType employeeSchema()
+    {
+        return new StructType(
+                new StructField[] {
+                new StructField("emp_id", DataTypes.IntegerType,false,
+                        Metadata.empty()),
+                new StructField("name", DataTypes.StringType,true,
+                        Metadata.empty()),
+                new StructField("designation", DataTypes.StringType,false,
+                        Metadata.empty())
+            
+                });
+    }
+
+}
+
+
+spark-shell --packages org.apache.spark:spark-avro_2.12:3.1.3
+
+
+ val df=spark.read.format("csv").option("header",true).load("c:/test/employee.csv")
+ 
+
+ df.show
+ 
+ df.write.format("avro").save("c:/testavro")
+ 
+ scala> val df=spark.read.format("avro").load("c:/testavro")
+df: org.apache.spark.sql.DataFrame = [id: string, name: string ... 1 more field]
+
+scala> df.show
+
+
+      
+      
+      

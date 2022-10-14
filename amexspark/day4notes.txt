@@ -1,0 +1,163 @@
+steps for setting up HDFS:
+
+1. set the JAVA_HOME environment variable.
+
+2. Download hadoop 3.2.0 from https://archive.apache.org/dist/hadoop/common/hadoop-3.2.0/hadoop-3.2.0.tar.gz and extract to c:\.
+
+3. Download winutils for hadoop from https://github.com/cdarlint/winutils.git and extract it to c:\.
+4. Copy the content of  C:\winutils-master\hadoop-3.2.0\bin to c:\hadoop-3.2.0\bin directory.
+
+5. set the HADOOP_HOME environment variable value to c:\hadoop-3.2.0.
+
+6. open the core-site-xml under %HADOOP_HOME%\etc\hadoop and modify its content as shown below.
+
+ <configuration>
+<property>
+<name>fs.default.name</name>
+<value>hdfs://localhost:9820</value>
+</property>
+</configuration>
+
+7. open the %HADOOP_HOME%\etc\hadoop\hdfs-site.xml and add the following content.
+
+<configuration>
+<property>
+<name>dfs.replication</name>
+<value>1</value>
+</property>
+<property>
+<name>dfs.namenode.name.dir</name>
+<value>file:///C:/data/dfs/namenode</value>
+</property>
+<property>
+<name>dfs.datanode.data.dir</name>
+<value>file:///C:/data/dfs/datanode</value>
+</property>
+</configuration>
+
+8. open the %HADOOP_HOME\etc\hadoop\mapred-site.xml and add the following content to it.
+
+<configuration>
+<property>
+<name>mapreduce.framework.name</name>
+<value>yarn</value>
+<description>MapReduce framework name</description>
+</property>
+</configuration>
+
+9. open the %HADOOP_HOME\etc\hadoop\yarn-site.xml and add the following content to it.
+
+<configuration>
+
+<!-- Site specific YARN configuration properties -->
+<property>
+<name>yarn.nodemanager.aux-services</name>
+<value>mapreduce_shuffle</value>
+<description>Yarn Node Manager Aux Service</description>
+</property>
+
+</configuration>
+
+10. add %HADOOP_HOME%\bin and %HADOOP_HOME%\sbin to the path.
+
+11. open the hadoop-env.cmd file %HADOOP_HOME%\etc\hadoop directory and replace the
+JAVA_HOME environment variable value with the actual JAVA_HOME.
+
+set JAVA_HOME=C:\Progra~1\Java\jdk1.8.0_202
+
+12. Format the c:\data\dfs directory .
+
+open a new command window , navigate to this directory and run the following command.
+
+hdfs namenode -format
+
+13. start the name node and data node
+start-dfs
+
+
+
+	    Extract		Transform		Load
+Kafka Topic--------------------> Spark Streaming App------------------------->HDFS
+
+
+
+
+CheckPoint:
+
+The checkpoint location denotes the directory which contains the meta data of files written to the outputstream.
+In case, if only part of the files are read , the checkpoint contains the details of it.
+
+So this can be useful in fault tolerance.
+
+ie in case if an application crashes in the middle of reading a directory/file, using checkpoint location spark finds out where to resume.
+
+The check point location is specified through a property called checkpointLocation.
+
+
+Output modes:
+
+After processing the streaming data, spark needs to store it somewhere on the persistence storage.
+Spark uses the following output modes to store the streaming data.
+
+append mode: This is the default mode. Spark will output only the newly processed rows since the last trigger.
+
+update mode: In this mode, spark will output only updated rows since the last trigger. If we are not using aggregation 
+on streaming data (meaning previous records can't be updated), then it will behave similar to append mode.
+
+complete mode: In this mode, spark will output all the rows it has processed so far.
+
+The default trigger interval 0 ms. Once a trigger is initialized, after completion of processing of data, spark immediately
+initiates the next trigger.
+
+Input Source:
+
+File----------csv,json,parquet
+
+Kafka
+
+explode():
+
+explode() is used to create or split an array or map dataframe columns to rows.
+
+
+
+Output sinks:
+The datasource to which the data is written is called output sink.
+
+console sink---------displays the content of the dataframe to the console.
+
+file sink---------------stores the content of the dataframe in a file within  a directory. supports csv,json,parquet and etc.
+
+kafka sink------------publishes data to kafka topic
+
+foreach sink---applies to each row of a data frame and can be used when writing cutom logic to store data
+
+for each batch sink---------applies to each micro batch of a dataframe and also can be used when writing custom logic to store data.
+
+
+
+Exercise:
+
+From csv file for employee data , concate emp_id,name and designation using : as the separator and publish each 
+data to a kafka topic called emp-topic.
+
+foreachBatch sink:
+
+The foreachBatch sink is used if we want to store data in any arbitrary storage like NoSqlDB,RDBMS and etc.
+By using foreach and foreachBatch, we can write custom logic to store the data.
+
+for each performs custom write logic on each row.
+foreachBatch performs custom write logic on each micro batch.
+
+
+
+
+
+
+
+
+
+
+
+
+

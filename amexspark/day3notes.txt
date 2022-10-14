@@ -1,0 +1,171 @@
+Jdbc: Java Database Connectivity------------- a database independent api.
+
+Jdbc driver is in the form of jar file used by java applications to connect to database.
+
+
+
+employee.json
+
+{"empId":1001,"name":"Arvind","deptCode":111}
+{"empId":1002,"name":"Surya","deptCode":112}
+
+
+department.json
+
+{"deptCode":111,"name":"HR"}
+{"deptCode":112,"name":"DEV"}
+
+Spark Streaming:
+
+Deals with live data.
+DStream------------Unstructured data
+SqlStream----------Structured data
+
+DStream is an abstaction representing continuous flow of RDDs.
+
+DStream---------Discretized stream
+
+
+ETL------------Extract Transform and Load
+
+	    Extract		Transform		Load
+Kafka Topic--------------------> Spark Streaming App------------------------->HDFS
+
+
+	    Extract		Transform		Load
+Kafka Topic--------------------> Spark Streaming App------------------------->Local File System
+
+
+Kafka is a message oriented middleware----------------meant for asynchronous communication.
+
+
+Sender------------------------>MOM--------------------------->Receiver
+
+
+Two types of messaging:
+
+point to point (1 to 1)
+
+sender----------------------->Queue---------------->receiver
+
+publish & subscribe(1 to many)
+
+			                |------------------->receiver 1	
+sender--------------------->Topic-----------------|------------------->receiver 2
+                                                                     |------------------->receiver 3
+
+Queue and Topic are collectively messaging destinations.
+
+
+Kafka supports only publish & subscribe messaging.
+
+In kafka, the topic is divided into multiple partitions to logically group the messages.
+
+To provide fault tolerance, each partition may be replicated in multiple nodes in the cluster.
+
+The number of copies of the partition is decided based on the replication factor.
+
+A single topic spreads across multiple nodes in the cluster.
+
+For example, if there are 5 nodes in the cluster and 4 partitions in topic (namely 0 to 3) and if the replication factor  is 3, sample distribution of 
+partitions is as shown below.
+
+node1---------------------0,1
+node2---------------------2,3,0
+node3---------------------1,2
+node4----------------------3,0
+node5----------------------1,2,3
+
+
+kafka is written in java(80%) and scala(20%).
+
+kafka_2.12-2.5.0.tgz.
+
+
+2.12 is the scala version used for development of kafka.
+2.5.0 is the kafka version.
+
+
+kafka setup and verification.
+
+1. Download  kafka 2.5.0 from https://archive.apache.org/dist/kafka/2.5.0/kafka_2.12-2.5.0.tgz and extract it to c:\.
+2. Add c:\kafka_2.12-2.5.0\bin\windows to the path.
+3. start the zookeeper.
+
+zookeeper is a component used by apache kafka for storing its meta data.
+
+open a new command window and run the following command.
+
+zookeeper-server-start c:\kafka_2.12-2.5.0\config\zookeeper.properties
+By default, zookeeper runs at port 2181.
+
+4. start the kafka server
+open a new command window and run the following command.
+
+kafka-server-start c:\kafka_2.12-2.5.0\config\server.properties
+
+By default, kafka runs at port 9092.
+
+
+5. create a topic called test-topic with 4 partitions.
+
+open a new command window and run the following command.
+
+kafka-topics --create --topic test-topic --partitions 4 --replication-factor 1 --zookeeper localhost:2181
+
+6. start a kafka console producer to send messages to the topic.
+
+kafka-console-producer --topic test-topic --bootstrap-server localhost:9092
+
+7. start a kafka consumer to consume messages from the topic.
+
+open a new command window and run the following command.
+
+kafka-console-consumer --topic test-topic --bootstrap-server localhost:9092
+
+
+Each kafka message may be associated with a key.
+kafka guarantees that all the messages with the same key go to the same partition.
+
+	serializer	           (byte[])	deserializer
+sender----------------------------->topic----------------------------------->receiver
+	String--->byte[]		byte[]------>String		
+
+
+Consumer Group guarantees that a message consumed by one consumer of the group is not consumed by another consumer
+of the same group.
+
+
+LocationStrategies.PreferConsistent ensures that spark nodes consume messages from the near by kafka servers.
+
+
+
+
+
+
+Spark Structured Streaming:
+
+It is used to manipulate live data in structured format like json,parquet,csv and etc.
+The structured streaming is built on data frames.
+
+
+Developing  a simple application which polls at a directory every one minute and if any new data is available in the directory
+processes them and assumes that the data is in csv format.
+
+
+
+create a user defined schema which represents an account as shown below.
+
+acc_no	int
+acc_type	string
+balance	double
+
+The json file content format is 
+
+{"acc_no":242322,"acc_type":"SB","balance":2325.22}
+
+create a structured streaming application which reads the json files from the directory c:\structuredjsondata\test every 30 seconds
+and print the acc_no and balance in the console.
+
+
+

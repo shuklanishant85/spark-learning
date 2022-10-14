@@ -1,0 +1,555 @@
+  https://drive.google.com/drive/folders/1PM_1Mxqzf1BoKFRvr0ENMQSJ3hwAIV5k?usp=sharing
+ 
+ https://github.com/cdarlint/winutils.git
+ 
+ C:\winutils-master\hadoop-3.2.0\bin
+ 
+%HADOOP_HOME@\etc\hadoop core-site.xml
+ 
+ <configuration>
+<property>
+<name>fs.default.name</name>
+<value>hdfs://localhost:9820</value>
+</property>
+</configuration>
+
+
+%HADOOP_HOME@\etc\hadoos\hdfs-site.xml
+<configuration>
+<property>
+<name>dfs.replication</name>
+<value>1</value>
+</property>
+<property>
+<name>dfs.namenode.name.dir</name>
+<value>file:///C:/data/dfs/namenode</value>
+</property>
+<property>
+<name>dfs.datanode.data.dir</name>
+<value>file:///C:/data/dfs/datanode</value>
+</property>
+</configuration>
+
+mapred-site.xml
+
+<configuration>
+<property>
+<name>mapreduce.framework.name</name>
+<value>yarn</value>
+<description>MapReduce framework name</description>
+</property>
+</configuration>
+
+yarn-site.xml
+
+<configuration>
+
+<!-- Site specific YARN configuration properties -->
+<property>
+<name>yarn.nodemanager.aux-services</name>
+<value>mapreduce_shuffle</value>
+<description>Yarn Node Manager Aux Service</description>
+</property>
+
+</configuration>
+
+set JAVA_HOME=C:\Progra~1\Java\jdk1.8.0_202
+
+c:\data\dfs>
+
+hdfs namenode -format
+
+
+
+start-dfs
+
+C:\data\dfs>hdfs dfs -mkdir /training
+
+C:\data\dfs>hdfs dfs -ls /
+
+hdfs dfs -put c:\test\words.txt /training
+
+C:\Users\Administrator>hdfs dfs -ls /training
+C:\Users\Administrator>hdfs dfs -cat /training/words.txt
+
+
+
+scala> val rdd1=sc.textFile("hdfs://localhost:9820/training/words.txt")
+rdd1: org.apache.spark.rdd.RDD[String] = hdfs://localhost:9820/training/words.txt MapPartitionsRDD[1] at textFile at <console>:24
+
+scala> rdd1.collect
+
+
+package com.amex.training.kafkastreams;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.spark.SparkConf;
+import org.apache.spark.streaming.Durations;
+import org.apache.spark.streaming.api.java.JavaInputDStream;
+import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import org.apache.spark.streaming.kafka010.ConsumerStrategies;
+import org.apache.spark.streaming.kafka010.KafkaUtils;
+import org.apache.spark.streaming.kafka010.LocationStrategies;
+
+
+import scala.Tuple2;
+
+
+
+public class KafkaSparkStreamETLHDFSTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        String topic="test-topic";
+        String kafkaUrl="localhost:9092";
+        Map<String, Object> props=new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "group-1");
+        
+        Collection<String> topics=Collections.singletonList(topic);
+        
+        SparkConf conf=new SparkConf();
+        conf.setMaster("local[*]");
+        conf.setAppName("etl-kafka-spark-streaming-app");
+        JavaStreamingContext context=new JavaStreamingContext(conf, Durations.seconds(30));
+        context.sparkContext().setLogLevel("WARN");
+        JavaInputDStream<ConsumerRecord<String, String>> dStream=
+                KafkaUtils.createDirectStream(context, 
+                        LocationStrategies.PreferConsistent(), 
+                        ConsumerStrategies.Subscribe(topics, props));
+        
+        dStream.mapToPair(record->new Tuple2<>(record.key(),record.value()))
+        .map(t->t._2).flatMap(line->Arrays.asList(line.split(" ")).iterator())
+        .mapToPair(word->new Tuple2<>(word, 1))
+        .reduceByKey((a,b)->a+b).dstream().saveAsTextFiles("hdfs://localhost:9820/training/wc/", 
+                "-kafkawc");
+        context.start();
+        System.out.println("streaming started");
+        try {
+            Thread.sleep(10*60*1000);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        context.stop();
+        
+
+    }
+
+}
+
+
+zookeeper-server-start c:\kafka_2.12-2.5.0\config\zookeeper.properties
+
+kafka-server-start c:\kafka_2.12-2.5.0\config\server.properties
+
+kafka-console-producer --topic test-topic --bootstrap-server localhost:9092
+
+hdfs dfs -ls /training/wc
+
+
+
+hdfs dfs -cat /training/wc/-1665643020000.-kafkawc/*
+
+
+
+package com.amex.training.structuredstreams;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.StreamingQuery;
+import org.apache.spark.sql.streaming.Trigger;
+
+public class StructuredStreamTest2 {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("structured-stream-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        String inputDirectory="c:/structuredcsvdata/test";
+        Dataset<Row> df=spark.readStream().schema(StructuredStreamingUtility.employeeSchema())
+                .csv(inputDirectory).where("designaton='Developer'");
+        
+        try {
+            StreamingQuery query=df.writeStream().trigger(Trigger.ProcessingTime(1,TimeUnit.MINUTES))
+                    .format("json")
+                    .option("checkpointLocation", "testcheckpoint")
+                    .start("c:/structuredjsondata");
+            System.out.println("streaming started");
+            Thread.sleep(10*60*1000);
+            query.stop();
+        } catch (TimeoutException | InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        
+    }
+
+}
+
+
+public static StructType stockSchema()
+    {
+        return new StructType(
+                new StructField[] {
+                new StructField("Date", DataTypes.StringType,false,
+                        Metadata.empty()),
+                new StructField("Open", DataTypes.DoubleType,true,
+                        Metadata.empty()),
+                
+                new StructField("High", DataTypes.DoubleType,true,
+                        Metadata.empty()),
+                
+                new StructField("Low", DataTypes.DoubleType,true,
+                        Metadata.empty()),
+                new StructField("Close", DataTypes.DoubleType,true,
+                        Metadata.empty()),
+                new StructField("Volume", DataTypes.LongType,true,
+                        Metadata.empty())
+                });
+    }
+    
+    
+  
+  
+  
+  package com.amex.training.structuredstreams;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.sql.streaming.StreamingQuery;
+import static org.apache.spark.sql.functions.*;
+
+public class StructuredStreamTest3 {
+    
+    public static Column getFileName()
+    {
+        return input_file_name();
+    }
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("structured-stream-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        String inputDirectory="C:/streaminputdata/test";
+        Dataset<Row> df=spark.readStream().schema(StructuredStreamingUtility.stockSchema())
+                .option("maxFilesPerTrigger", 2)
+                .format("csv")
+                .option("path", inputDirectory)
+                .load()
+                .withColumn("Name", getFileName());
+        Dataset<Row> stockDF=df.groupBy(col("Name"),year(col("Date")).as("Year"))
+                .agg(max("High").as("Max"));
+        
+        try {
+            StreamingQuery query=stockDF.writeStream()
+                    .format("console")
+                    .outputMode(OutputMode.Update())
+                    .option("truncate", false)
+                    .option("numRows", 3)
+                    .start();
+            System.out.println("streaming started");
+            Thread.sleep(10*60*1000);
+            query.stop();
+        } catch (TimeoutException | InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        
+    }
+
+}
+
+
+ <dependencies>
+  <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-sql -->
+<dependency>
+    <groupId>org.apache.spark</groupId>
+    <artifactId>spark-sql_2.12</artifactId>
+    <version>3.1.3</version>
+  
+</dependency>
+  <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-sql-kafka-0-10 -->
+<dependency>
+    <groupId>org.apache.spark</groupId>
+    <artifactId>spark-sql-kafka-0-10_2.12</artifactId>
+    <version>3.1.3</version>
+    
+</dependency>
+  
+  </dependencies>
+  
+  
+ zookeeper-server-start c:\kafka_2.12-2.5.0\config\zookeeper.properties
+
+kafka-server-start c:\kafka_2.12-2.5.0\config\server.properties
+
+
+  kafka-topics --create --topic second-topic --partitions 5 --replication-factor 1 --zookeeper localhost:2181
+  
+  kafka-console-producer --topic second-topic --bootstrap-server localhost:9092
+  
+  kafka-console-consumer --topic second-topic --bootstrap-server localhost:9092
+  
+  package com.amex.training.kafkastructuredstream;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.sql.streaming.StreamingQuery;
+
+import static org.apache.spark.sql.functions.*;
+
+import java.util.concurrent.TimeoutException;
+public class StructuredStreamWithKafkaTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("kafka-structured-stream-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        
+        Dataset<Row> df=spark.readStream().format("kafka")
+                        .option("kafka.bootstrap.servers", "localhost:9092")
+                        .option("subscribe", "second-topic")
+                        .load()
+                        .select(col("value").cast("string"));
+
+        Dataset<Row> wordCount=
+                df.select(explode(split(col("value")," ")).alias("words"))
+                .groupBy("words").count();
+        try {
+            StreamingQuery query= wordCount.writeStream()
+            .outputMode(OutputMode.Update())
+            .format("console")
+            .start();
+            
+            
+            System.out.println("streaming started");
+            Thread.sleep(10*60*1000);
+            query.stop();
+            
+            
+        } catch (TimeoutException | InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+}
+
+
+package com.amex.training.kafkastructuredstream;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.sql.streaming.StreamingQuery;
+
+import static org.apache.spark.sql.functions.*;
+
+import java.util.concurrent.TimeoutException;
+public class StructuredStreamWithKafkaAndHDFSTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("kafka-structured-stream-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        
+        Dataset<Row> df=spark.readStream().format("kafka")
+                        .option("kafka.bootstrap.servers", "localhost:9092")
+                        .option("subscribe", "second-topic")
+                        .load()
+                        .select(col("value").cast("string"));
+
+        /*Dataset<Row> wordCount=
+                df.select(explode(split(col("value")," ")).alias("words"))
+                .groupBy("words").count();*/
+        try {
+            StreamingQuery query= df.writeStream()
+            //.outputMode(OutputMode.Complete())
+            .format("json")
+            .option("checkpointLocation","c:/wordcountchkpoint")
+            .start("hdfs://localhost:9820/training/jsonwordcount");
+            
+            
+            System.out.println("streaming started");
+            Thread.sleep(10*60*1000);
+            query.stop();
+            
+            
+        } catch (TimeoutException | InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+}
+
+
+C:\Users\Administrator>hdfs dfs -ls /training/jsonwordcount
+
+
+C:\Users\Administrator>hdfs dfs -cat /training/jsonwordcount/*
+
+package com.amex.training.kafkastructuredstream;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.StreamingQuery;
+
+import static org.apache.spark.sql.functions.*;
+
+import java.util.concurrent.TimeoutException;
+
+
+public class StructuredStreamWithKafkaSink {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        
+        SparkSession spark=SparkSession.builder().appName("structured-stream-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        String inputDirectory="C:/streaminputdata/test";
+        Dataset<Row> df=spark.readStream().schema(StructuredStreamingUtility.stockSchema())
+                .option("maxFilesPerTrigger", 2)
+                .format("csv")
+                .option("path", inputDirectory)
+                .load();
+                
+        Dataset<Row> resultDF=df.withColumn("value", 
+                concat_ws("|", column("Date"),column("Open"),column("Close"),column("High")));
+        
+        try {
+            StreamingQuery query=resultDF.writeStream().
+            format("kafka").option("topic","third-topic")
+            .option("kafka.bootstrap.servers", "localhost:9092")
+            .option("checkpointLocation", "next-check-point")
+            .start();
+            System.out.println("streaming started");
+            Thread.sleep(10*60*1000);
+            query.stop();
+            
+        } catch (TimeoutException | InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+                
+
+    }
+
+}
+
+
+kafka-topics --create --topic third-topic --partitions 5 --replication-factor 1 --zookeeper localhost:2181
+
+kafka-console-consumer --topic third-topic --bootstrap-server localhost:9092 --from-beginning
+
+
+package com.amex.training.kafkastructuredstream;
+
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
+
+public class StructuredStreamingUtility {
+    public static StructType employeeSchema()
+    {
+        return new StructType(
+                new StructField[] {
+                new StructField("emp_id", DataTypes.IntegerType,false,
+                        Metadata.empty()),
+                new StructField("name", DataTypes.StringType,true,
+                        Metadata.empty()),
+                new StructField("designation", DataTypes.StringType,false,
+                        Metadata.empty())
+            
+                });
+    }
+    
+    public static StructType accountSchema()
+    {
+        return new StructType(
+                new StructField[] {
+                new StructField("acc_no", DataTypes.IntegerType,false,
+                        Metadata.empty()),
+                new StructField("acc_type", DataTypes.StringType,true,
+                        Metadata.empty()),
+                new StructField("balance", DataTypes.DoubleType,false,
+                        Metadata.empty())
+            
+                });
+    }
+
+    public static StructType stockSchema()
+    {
+        return new StructType(
+                new StructField[] {
+                new StructField("Date", DataTypes.StringType,false,
+                        Metadata.empty()),
+                new StructField("Open", DataTypes.DoubleType,true,
+                        Metadata.empty()),
+                
+                new StructField("High", DataTypes.DoubleType,true,
+                        Metadata.empty()),
+                
+                new StructField("Low", DataTypes.DoubleType,true,
+                        Metadata.empty()),
+                new StructField("Close", DataTypes.DoubleType,true,
+                        Metadata.empty()),
+                new StructField("Volume", DataTypes.LongType,true,
+                        Metadata.empty())
+                });
+    }
+
+}
+
+
+
+Exercise:
+
+From csv file for employee data , concate emp_id,name and designation using : as the separator and publish each 
+data to a kafka topic called emp-topic.
+
+
+
+  <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>5.1.39</version>
+</dependency>
+

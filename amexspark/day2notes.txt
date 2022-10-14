@@ -1,0 +1,144 @@
+Executor:
+
+An executor is a jvm (java process) that spark creates on each worker for an application.
+For each application, an executor will be running in the worker node.
+
+A single worker may contain multiple executors based on the number of applications running.
+
+An executor has the same life span as the application for which it is created.
+
+Job:
+
+A job is a set of computations that spark performs to return results to the driver program.
+Each job contains one action and one or more transformations.
+
+Task:
+
+A task is the smallest unit of work that spark sends to an executor. Spark creates a task per partition.
+An executor runs one or more tasks concurrently.
+
+Shuffle:
+
+A shuffle redistributes data among a a cluster of nodes. It is an expensive operation because it involves moving data across a network.
+
+Stage:
+
+A stage is a collection of tasks. Spark splits a job into DAG of stages.
+A stage may depend on another stage.
+For each shuffle, a new stage is created.
+
+In a transformation, when there is a shuffle, it starts another stage becuase the data in the partitons have changed and separate set of tasks have
+to be launched.
+
+steps for running the app in the cluster.
+
+1. start the master
+spark-class org.apache.spark.deploy.master.Master
+2. start 3 worker nodes.
+
+open three new command windows and run the following command.
+
+spark-class org.apache.spark.deploy.worker.Worker master-url
+
+3. submit the application in the cluster.
+
+spark-submit --class classname --master master-url jar-file
+
+
+Pair RDD:
+Each element of the rdd is a key value pair.
+
+In scala, each key value pair is called a 2 element tuple.
+
+The first element of the tuple is the key.
+The second element of the tuple is the value.
+
+Based on the key, we can perform grouping.
+
+Spark guarantees that all the data(key-value pair) with the same key go to the same partition.
+
+
+Elements of the rdd are ("a",1),("b",2),("a",5),("c",5),("b",6),("a",3),("c",2),("a",12),("a",3),("b",10)
+
+For each key (a,b)=>a+b
+
+a is the first value, b is the second value.
+
+for key "a",
+
+(1,5)=>6
+(6,3)=>9
+(9,12)=>21
+(21,3)=>24
+
+
+Map-Reduce 2 phases:
+
+1. map phase(transformations)
+2. reduce phase(summarization)
+
+rdd of integers stored in a file---each line contains an integer.
+5
+6
+7
+2
+sum of squares of numbers:
+
+map phase-----open the file, map each line to an integer, map each integer to its square
+reduce phase---calculate the sum of squares.
+
+
+Spark Sql----------------deals with structured data------------built on top of rdds.
+
+dataframe-----------type checking done at runtime
+dataset---------------type checking done at compile time.
+
+dataset is supported only by java and scala.
+
+python does not suport dataset.
+
+SparkContext is the entry point to Core spark.
+
+SparkSession is the entry point to spark sql.
+
+spark shell provides an implicit object called spark of type SparkSession.
+
+Parquet:
+It is a columnar storage format. The data is in binary format. More efficient than json and csv.
+More commonly used when we select some specific columns from the data.
+
+The default format for read and write in data frame is parquet.
+
+
+
+create a json file called employee.json with the following data:
+
+{"id":1001,"name":"Deva","designation":"Developer"}
+{"id":1002,"name":"Amar","designation":"Accountant"}
+{"id":1003,"name":"Suresh","designation":"Architect"}
+{"id":1004,"name":"Amar","designation":"Developer"}
+
+create a data frame using these data.
+
+select id and name for  all developers  and write them to the directory c:\developers in parquet format
+select id and name for  all architects  and write them to the directory c:\architects in json format
+select id and name for  all accountants  and write them to the directory c:\accountants in csv format including headers.
+
+
+
+Avro:
+
+Avro is also a dta serialization and exchange format very popular in the big data world.
+Avro is row based format and it is efficiet when we want to write the entire row.
+Both the schema and data are stored together in avro.
+The schema is stored in json format and the data is stored in binary format.
+
+
+
+
+
+
+
+
+
+

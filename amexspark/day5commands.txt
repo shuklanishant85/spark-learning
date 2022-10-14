@@ -1,0 +1,663 @@
+  https://drive.google.com/drive/folders/1PM_1Mxqzf1BoKFRvr0ENMQSJ3hwAIV5k?usp=sharing
+  
+  
+   <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>5.1.39</version>
+</dependency>
+
+
+ 
+ show databases;
+ 
+ package com.amex.training.structuredstreams;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SaveMode;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.sql.streaming.StreamingQuery;
+import static org.apache.spark.sql.functions.*;
+//import static java.lang.Math.*;
+
+public class StructuredStreamForEachBatchTest {
+    
+    public static Column getFileName()
+    {
+        return input_file_name();
+    }
+    
+    public static void saveToDB(Dataset<Row>  df,Object batchId)
+    {
+        df.withColumn("batchId", lit(batchId))
+        .write()
+        .format("jdbc")
+        .option("url", "jdbc:mysql://localhost:3306/trainingdb")
+        .option("dbtable","employee").option("user","root").option("password","rps@12345")
+        .mode(SaveMode.Append)
+        .save();
+    }
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+    //  System.out.println(sqrt(25));
+        SparkSession spark=SparkSession.builder().appName("structured-stream-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        String inputDirectory="C:/streaminputdata/test";
+        Dataset<Row> df=spark.readStream().schema(StructuredStreamingUtility.stockSchema())
+                .option("maxFilesPerTrigger", 2)
+                .format("csv")
+                .option("path", inputDirectory)
+                .load()
+                .withColumn("Name", getFileName());
+        
+        
+        Dataset<Row> resultDF=df.select("Name","Date","Open");
+        
+        try {
+            StreamingQuery query=resultDF.writeStream()
+                    .outputMode(OutputMode.Append())
+                    .foreachBatch((df1,id)->saveToDB(df1, id))
+                    .start();
+            System.out.println("streaming started");
+            Thread.sleep(10*60*1000);
+            query.stop();
+        } catch (TimeoutException | InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        
+    }
+
+}
+
+
+mysql> use trainingdb;
+Database changed
+mysql> show tables;
+
+mysql> select * from stock_data;
+
+
+package com.amex.training.structuredstreams;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
+
+public class StructuredStreamingUtility {
+    public static StructType employeeSchema()
+    {
+        return new StructType(
+                new StructField[] {
+ 
+
+               new StructField("emp_id", DataTypes.IntegerType,false,
+                        Metadata.empty()),
+                new StructField("name", DataTypes.StringType,true,
+                        Metadata.empty()),
+                new StructField("designation", DataTypes.StringType,false,
+                        Metadata.empty())
+            
+                });
+    }
+    
+    public static StructType accountSchema()
+    {
+        return new StructType(
+                new StructField[] {
+                new StructField("acc_no", DataTypes.IntegerType,false,
+                        Metadata.empty()),
+                new StructField("acc_type", DataTypes.StringType,true,
+                        Metadata.empty()),
+                new StructField("balance", DataTypes.DoubleType,false,
+                        Metadata.empty())
+            
+                });
+    }
+
+    public static StructType stockSchema()
+    {
+        return new StructType(
+                new StructField[] {
+                new StructField("Date", DataTypes.StringType,false,
+                        Metadata.empty()),
+                new StructField("Open", DataTypes.DoubleType,true,
+                        Metadata.empty()),
+                
+                new StructField("High", DataTypes.DoubleType,true,
+                        Metadata.empty()),
+                
+                new StructField("Low", DataTypes.DoubleType,true,
+                        Metadata.empty()),
+                new StructField("Close", DataTypes.DoubleType,true,
+                        Metadata.empty()),
+                new StructField("Volume", DataTypes.LongType,true,
+                        Metadata.empty())
+                });
+    }
+
+}
+
+
+
+
+package com.amex.training.structuredstreams;
+
+import org.apache.spark.sql.ForeachWriter;
+import org.apache.spark.sql.Row;
+
+public class StockWriter extends ForeachWriter<Row>{
+
+    @Override
+    public void close(Throwable errorOrNull) {
+        // TODO Auto-generated method stub
+        System.out.println("closing");
+    }
+
+    @Override
+    public boolean open(long partitionId, long epochId) {
+        // TODO Auto-generated method stub
+        System.out.println("partition id: "+partitionId+"\tepochId: "+epochId);
+        return true;
+    }
+
+    @Override
+    public void process(Row value) {
+        // TODO Auto-generated method stub
+        System.out.println("Name: "+value.getAs("Name").toString());
+        System.out.println("Date:"+value.getAs("Date").toString());
+        System.out.println("Open:"+value.getAs("Open").toString());
+        
+    }
+
+    
+
+}
+
+
+
+package com.amex.training.structuredstreams;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SaveMode;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.sql.streaming.StreamingQuery;
+import static org.apache.spark.sql.functions.*;
+//import static java.lang.Math.*;
+
+public class StructuredStreamForEachWriterTest {
+    
+    public static Column getFileName()
+    {
+        return input_file_name();
+    }
+    
+    
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+    //  System.out.println(sqrt(25));
+        SparkSession spark=SparkSession.builder().appName("structured-stream-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        String inputDirectory="C:/streaminputdata/test";
+        Dataset<Row> df=spark.readStream().schema(StructuredStreamingUtility.stockSchema())
+                .option("maxFilesPerTrigger", 2)
+                .format("csv")
+                .option("path", inputDirectory)
+                .load()
+                .withColumn("Name", getFileName());
+        
+        
+        Dataset<Row> resultDF=df.select("Name","Date","Open");
+        StockWriter writer=new StockWriter();
+        try {
+            StreamingQuery query=resultDF.writeStream()
+                    .outputMode(OutputMode.Append())
+                    .foreach(writer)
+                    .start();
+            System.out.println("streaming started");
+            Thread.sleep(10*60*1000);
+            query.stop();
+        } catch (TimeoutException | InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        
+    }
+
+}
+
+
+
+Exercise
+create a user defined schema for user data as shown below:
+
+name string
+pcode long
+age int
+
+
+Assume that every 30 seconds, new files for user data in json format will be added to the directory c:\userdata\json.
+
+Writer a custom writer to print each row in the console as per  the following format
+
+name|age:::pcode
+
+
+package com.amex.training.structuredstreams;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.sql.streaming.StreamingQuery;
+import static org.apache.spark.sql.functions.*;
+//import static java.lang.Math.*;
+
+public class StructuredStreamTumblingWindowTest {
+    
+    public static Column getFileName()
+    {
+        return input_file_name();
+    }
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+    //  System.out.println(sqrt(25));
+        SparkSession spark=SparkSession.builder().appName("structured-stream-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        String inputDirectory="C:/streaminputdata/test";
+        Dataset<Row> df=spark.readStream().schema(StructuredStreamingUtility.stockSchema())
+                .option("maxFilesPerTrigger", 2)
+                .format("csv")
+                .option("path", inputDirectory)
+                .load()
+                .withColumn("Name", getFileName());
+        Dataset<Row> resultDF=df.select("Name","Date","Open","High","Low")
+                    .groupBy(window(column("Date"), "10 days"),column("Name"))
+                    .agg(max("High").as("Max"))
+                    .orderBy(column("window.start"));
+        try {
+            StreamingQuery query=resultDF.writeStream()
+                    .format("console")
+                    .outputMode(OutputMode.Complete())
+                    .option("truncate", false)
+                    //.option("numRows", 3)
+                    .start();
+            System.out.println("streaming started");
+            Thread.sleep(10*60*1000);
+            query.stop();
+        } catch (TimeoutException | InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+                    
+    }
+
+}
+
+
+package com.amex.training.structuredstreams;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.sql.streaming.StreamingQuery;
+import static org.apache.spark.sql.functions.*;
+//import static java.lang.Math.*;
+
+public class StructuredStreamSlidingWindowTest {
+    
+    public static Column getFileName()
+    {
+        return input_file_name();
+    }
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+    //  System.out.println(sqrt(25));
+        SparkSession spark=SparkSession.builder().appName("structured-stream-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        String inputDirectory="C:/streaminputdata/test";
+        Dataset<Row> df=spark.readStream().schema(StructuredStreamingUtility.stockSchema())
+                .option("maxFilesPerTrigger", 2)
+                .format("csv")
+                .option("path", inputDirectory)
+                .load()
+                .withColumn("Name", getFileName());
+        Dataset<Row> resultDF=df.select("Name","Date","Open","High","Low")
+                    .groupBy(window(column("Date"), "10 days","5 days"),column("Name"))
+                    .agg(max("High").as("Max"))
+                    .orderBy(column("window.start"));
+        try {
+            StreamingQuery query=resultDF.writeStream()
+                    .format("console")
+                    .outputMode(OutputMode.Complete())
+                    .option("truncate", false)
+                    //.option("numRows", 3)
+                    .start();
+            System.out.println("streaming started");
+            Thread.sleep(10*60*1000);
+            query.stop();
+        } catch (TimeoutException | InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+                    
+    }
+
+}
+
+
+zookeeper-server-start c:\kafka_2.12-2.5.0\config\zookeeper.properties
+
+kafka-server-start c:\kafka_2.12-2.5.0\config\server.properties
+
+use trainingdb;
+
+mysql> create table test_time1(t timestamp,a int auto_increment primary key);
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> insert into test_time1(t) values(current_timestamp());
+Query OK, 1 row affected (0.00 sec)
+
+mysql> insert into test_time1(t) values(current_timestamp());
+Query OK, 1 row affected (0.00 sec)
+
+mysql> select * from test_time1;
+
+
+public static StructType dataSchema()
+    {
+        return new StructType(
+                new StructField[] {
+                new StructField("time_stamp", DataTypes.StringType,false,
+                        Metadata.empty()),
+                new StructField("data", DataTypes.IntegerType,false,
+                        Metadata.empty()),
+                }
+                );
+    }
+    
+    
+
+package com.amex.training.kafkastructuredstream;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.sql.streaming.StreamingQuery;
+
+
+
+import static org.apache.spark.sql.functions.*;
+
+import java.util.concurrent.TimeoutException;
+public class CSVWithWindowTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("kafka-structured-stream-window-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        
+        
+                String inputDirectory="c:/structuredcsvdata/test";
+        Dataset<Row> df=spark.readStream().schema(StructuredStreamingUtility.dataSchema())
+                .csv(inputDirectory).select("time_stamp","data");
+                
+        
+
+        Dataset<Row> eventDF=
+                df.select(split(col("time_stamp")," ").as("datetime"),col("data"))
+                .withColumn("event_timestamp",element_at(col("datetime"),1))
+                .drop("datetime");
+                
+        
+        
+        try {
+            StreamingQuery query= eventDF.writeStream()
+            .format("console")
+            .start();
+            
+            Thread.sleep(10*60*1000);
+            query.stop();
+            System.out.println("streaming started");
+            Thread.sleep(10*60*1000);
+            query.stop();
+            
+            
+        } catch (TimeoutException | InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+}
+
+
+package com.amex.training.kafkastructuredstream;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.sql.streaming.StreamingQuery;
+
+
+
+import static org.apache.spark.sql.functions.*;
+
+import java.util.concurrent.TimeoutException;
+public class CSVWithWindowTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("kafka-structured-stream-window-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        
+        
+                String inputDirectory="c:/structuredcsvdata/test";
+        Dataset<Row> df=spark.readStream().schema(StructuredStreamingUtility.dataSchema())
+                .csv(inputDirectory).select("time_stamp","data");
+                
+        
+
+        Dataset<Row> eventDF=
+                df.select(split(col("time_stamp")," ").as("datetime"),col("data"))
+                .withColumn("event_timestamp",element_at(col("datetime"),2)
+                        .cast("timestamp"))
+                .withColumn("val",col("data").cast("int"))
+                .drop("datetime")
+                .drop("data");
+                
+        
+        Dataset<Row> resultDF=eventDF.groupBy(window(col("event_timestamp"),"1 minute"))
+                .agg(count("val").as("count"));
+        try {
+            StreamingQuery query= resultDF.writeStream()
+            .format("console")
+            .outputMode(OutputMode.Update())
+            .option("truncate","false")
+            .start();
+            
+            Thread.sleep(10*60*1000);
+            query.stop();
+            System.out.println("streaming started");
+            
+            
+            
+        } catch (TimeoutException | InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+}
+
+
+ insert into test_time1(t) values(current_timestamp());
+ 
+ select * from test_time1;
+ 
+ select t,a from test_time1 where a <= 5 into outfile 'C:/structuredcsvdata/test/1.csv'  fields terminated by ',' lines terminated by '\r\n';
+ 
+ 
+ package com.amex.training.kafkastructuredstream;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.OutputMode;
+import org.apache.spark.sql.streaming.StreamingQuery;
+
+
+
+import static org.apache.spark.sql.functions.*;
+
+import java.util.concurrent.TimeoutException;
+public class CSVWithWindowTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("kafka-structured-stream-window-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        
+        
+                String inputDirectory="c:/structuredcsvdata/test";
+        //fetch the time_stamp and data from csv and populates the dataframe        
+        Dataset<Row> df=spark.readStream().schema(StructuredStreamingUtility.dataSchema())
+                .csv(inputDirectory).select("time_stamp","data");
+                
+        
+        //splits the timestamp into date and time and renames the time as event_timestamp,
+        //typecasts the data column to int and renames it to val
+        //and dropping the columns timestamp and data
+        Dataset<Row> eventDF=
+                df.select(split(col("time_stamp")," ").as("datetime"),col("data"))
+                .withColumn("event_timestamp",element_at(col("datetime"),2)
+                        .cast("timestamp"))
+                .withColumn("val",col("data").cast("int"))
+                .drop("datetime")
+                .drop("data");
+                
+        //we set the watermark to delay for next 1 minute for the late data to arrive
+        //and ignore any other data after the threshold time
+        Dataset<Row> resultDF=eventDF
+                .withWatermark("event_timestamp", "2 minute")
+                .groupBy(window(col("event_timestamp"),"1 minute"))
+                .agg(count("val").as("count"));
+        try {
+            StreamingQuery query= resultDF.writeStream()
+            .format("console")
+            .outputMode(OutputMode.Update())
+            .option("truncate","false")
+            .start();
+            
+            Thread.sleep(10*60*1000);
+            query.stop();
+            System.out.println("streaming started");
+            
+            
+            
+        } catch (TimeoutException | InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+}
+
+
+scala> val filePath="C:/sf-airbnb/sf-airbnb-clean.parquet"
+filePath: String = C:/sf-airbnb/sf-airbnb-clean.parquet
+
+scala> val df=spark.read.parquet(filePath)
+df: org.apache.spark.sql.DataFrame = [host_is_superhost: string, cancellation_policy: string ... 32 more fields]
+
+scala> df.printSchema
+df.select("room_type","bedrooms","bathrooms","number_of_reviews","price").show
+
+val Array(trainDF,testDF)=df.randomSplit(Array(0.8,0.2),seed=42)
+
+
+ println(f"""there are ${trainDF.count} rows in training set and ${testDF.count} in the test set""") 
+ 
+ 
+ import org.apache.spark.ml.feature.VectorAssembler;
+ 
+ 
+ val vecAssembler=new VectorAssembler().setInputCols(Array("bedrooms")).setOutputCol("features")
+ 
+ val vecTrainDF=vecAssembler.transform(trainDF)
+ 
+ vecTrainDF.select("bedrooms","features","price").show(10)
+ 
+ scala> import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.ml.regression.LinearRegression
+
+scala> val lr=new LinearRegression().setFeaturesCol("features").setLabelCol("price")
+lr: org.apache.spark.ml.regression.LinearRegression = linReg_c1ee8355e140
+
+scala> val lrModel=lr.fit(vecTrainDF)
+
+scala> val m=lrModel.coefficients(0)
+m: Double = 123.6757463819947
+
+scala> val b=lrModel.intercept
+b: Double = 47.51023373378815
+
+println(f"""The formula for linear regression line is price= $m%1.2f*bedrooms+ $b%1.2f""")
+
+scala> import org.apache.spark.ml.Pipeline
+
+val pipeline=new Pipeline().setStages(Array(vecAssembler,lr))
+
+ val pipelineModel=pipeline.fit(trainDF)
+ 
+ val predDF=pipelineModel.transform(testDF)
+ 
+ predDF.select("bedrooms","features","prediction").show
+ 
+ 
+ 
+
+ 

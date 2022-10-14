@@ -1,0 +1,613 @@
+  https://drive.google.com/drive/folders/1PM_1Mxqzf1BoKFRvr0ENMQSJ3hwAIV5k?usp=sharing
+ mysql> create database trainingdb;
+Query OK, 1 row affected (0.00 sec)
+
+mysql> use trainingdb;
+Database changed
+mysql> create table employee(id integer primary key,name varchar(20),designation varchar(20));
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> insert into employee values(1001,"Ramesh","Developer");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> insert into employee values(1002,"Deva","Accountant");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> insert into employee values(1003,"Amar","Architect");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> insert into employee values(1004,"Surya","Developer");
+Query OK, 1 row affected (0.00 sec)
+
+mysql> select * from employee;
+
+https://downloads.mysql.com/archives/get/p/3/file/mysql-connector-java-5.1.39.tar.gz
+
+:q
+
+
+spark-shell --driver-class-path c:\mysql-connector-java-5.1.39\mysql-connector-java-5.1.39-bin.jar
+
+ val df=spark.read.format("jdbc").option("url","jdbc:mysql://localhost:3306/trainingdb").option("dbtable","employee").option("user","root").option("password","rps@12345").load()
+ 
+ 
+  df.show
+  
+  
+ 
+<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+<dependency>
+    <groupId>mysql</groupId>
+    <artifactId>mysql-connector-java</artifactId>
+    <version>5.1.39</version>
+</dependency>
+
+
+package com.amex.training.sparksql;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+
+public class DataSetWithJDBCTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("dataframe-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        Dataset<Row> ds=spark.read().format("jdbc")
+                .option("url", "jdbc:mysql://localhost:3306/trainingdb")
+                .option("dbtable","employee").option("user","root").option("password","rps@12345").load();
+        
+        ds.show();
+
+    }
+
+}
+
+
+package com.amex.training.sparksql;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+
+public class DataSetWithJDBCTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("dataframe-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        Dataset<Row> ds=spark.read().format("jdbc")
+                .option("url", "jdbc:mysql://localhost:3306/trainingdb")
+                .option("dbtable","employee").option("user","root").option("password","rps@12345").load();
+        
+        
+        ds.where("designation='Developer'").write().json("c:/jdbcjsondata");
+
+    }
+
+}
+
+package com.amex.training.sparksql;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+
+public class DataSetWriteWithJDBCTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("dataframe-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        Dataset<Row> ds=spark.read().format("csv")
+                .option("header", true)
+                .load("c:/test/employee.csv");
+        
+        
+        ds.where("designation='Developer'").write().
+        format("jdbc").option("url", "jdbc:mysql://localhost:3306/trainingdb")
+        .option("dbtable","developers").option("user","root").option("password","rps@12345")
+        .save();
+
+    }
+
+}
+
+
+mysql> show tables;
+
+mysql> select * from developers;
+
+
+c:\test\employee.csv
+
+id,name,designation
+1001,Rakesh,Developer
+1002,Suresh,Accountant
+1008,Amar,Architect
+1009,Ramu,Developer
+1011,Deva,Accountant
+
+package com.amex.training.sparksql;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SaveMode;
+import org.apache.spark.sql.SparkSession;
+
+public class DataSetWriteWithJDBCTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("dataframe-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        Dataset<Row> ds=spark.read().format("csv")
+                .option("header", true)
+                .load("c:/test/employee.csv");
+        
+        
+        ds.where("designation='Developer'").write().
+        format("jdbc").option("url", "jdbc:mysql://localhost:3306/trainingdb")
+        .option("dbtable","developers").
+        mode(SaveMode.Append)
+        .option("user","root").option("password","rps@12345")
+        .save();
+
+    }
+
+}
+
+
+c:\test\people.csv
+
+pcode,lastName,firstName,age
+02134,Hopper,Grace,52
+,Turing,Alan,32
+94020,Lovelace,Ada,28
+87501,Babbage,Charles,49
+02134,Wirth,Niklaus,48
+
+
+c:\test\pcodes.csv
+
+pcode,city,state
+02134,Boston,MA
+94020,Palo Alto,CA
+87501,Santa Fe,NM
+60645,Chicago,IL
+
+
+ val peopleDF=spark.read.format("csv").option("header",true).load("c:/test/people.csv")
+ 
+ val pcodeDF=spark.read.format("csv").option("header",true).load("c:/test/pcodes.csv")
+ 
+ scala> val joinDF=peopleDF.join(pcodeDF,"pcode")
+joinDF: org.apache.spark.sql.DataFrame = [pcode: string, lastName: string ... 4 more fields]
+
+scala> joinDF.show
+
+
+val joinDF=peopleDF.join(pcodeDF,peopleDF("pcode")===pcodeDF("pcode"),"inner")
+
+scala> val joinDF=peopleDF.join(pcodeDF,peopleDF("pcode")===pcodeDF("pcode"),"left_outer")
+joinDF: org.apache.spark.sql.DataFrame = [pcode: string, lastName: string ... 5 more fields]
+
+scala> joinDF.show
+
+
+scala> peopleDF.join(pcodeDF,peopleDF("pcode")===pcodeDF("pcode"),"right_outer").show
+
+scala> peopleDF.join(pcodeDF,peopleDF("pcode")===pcodeDF("pcode"),"full_outer").show
+
+
+ df.where("id>1001").groupBy("designation").count.show
+ 
+ 
+
+scala> df.createTempView("emp")
+
+scala> spark.sql("select * from emp").show
+
+scala> peopleDF.createTempView("people")
+
+scala> pcodeDF.createTempView("pcode")
+
+
+
+spark.sql("select a.pcode,a.lastName,a.firstName,a.age,b.state,b.city from people a,pcode b where a.pcode=b.pcode").show
+
+employee.json
+
+{"empId":1001,"name":"Arvind","deptCode":111}
+{"empId":1002,"name":"Surya","deptCode":112}
+
+
+department.json
+
+{"deptCode":111,"deptName":"HR"}
+{"deptCode":112,"deptName":"DEV"}
+
+
+1001 Arvind HR
+
+
+
+<dependencies>
+  <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-streaming -->
+<dependency>
+    <groupId>org.apache.spark</groupId>
+    <artifactId>spark-streaming_2.12</artifactId>
+    <version>3.1.3</version>
+    
+</dependency>
+  
+  </dependencies>
+  
+  
+  
+ package com.amex.training.sparkstreams;
+
+import java.util.Arrays;
+
+import org.apache.spark.SparkConf;
+import org.apache.spark.streaming.Durations;
+import org.apache.spark.streaming.api.java.JavaDStream;
+import org.apache.spark.streaming.api.java.JavaStreamingContext;
+
+import scala.Tuple2;
+
+public class SparkStreamTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        
+        SparkConf conf=new SparkConf();
+        conf.setMaster("local[*]");
+        conf.setAppName("simple-streaming-app");
+        JavaStreamingContext context=new JavaStreamingContext(conf, Durations.seconds(30));
+        context.sparkContext().setLogLevel("WARN");
+        
+        //looks for new files in the specific directory and processes them
+        JavaDStream<String> dStream=context.textFileStream("c:/textstream/test");
+        dStre;am.flatMap(line->Arrays.asList(line.split(" ")).iterator())
+        .mapToPair(word->new Tuple2<>(word, 1))
+        .reduceByKey((a,b)->a+b).print()
+        
+        context.start();
+        System.out.println("streaming started");
+        try {
+            Thread.sleep(10*60*1000);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        context.stop();
+    }
+
+}
+
+
+
+zookeeper-server-start c:\kafka_2.12-2.5.0\config\zookeeper.properties
+
+kafka-server-start c:\kafka_2.12-2.5.0\config\server.properties
+
+kafka-topics --create --topic test-topic --partitions 4 --replication-factor 1 --zookeeper localhost:2181
+
+kafka-topics --list --zookeeper localhost:2181
+
+kafka-console-producer --topic test-topic --bootstrap-server localhost:9092
+
+kafka-console-consumer --topic test-topic --bootstrap-server localhost:9092
+
+
+<dependencies>
+  <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-streaming -->
+<dependency>
+    <groupId>org.apache.spark</groupId>
+    <artifactId>spark-streaming_2.12</artifactId>
+    <version>3.1.3</version>
+    
+</dependency>
+
+<!-- https://mvnrepository.com/artifact/org.apache.spark/spark-streaming-kafka-0-10 -->
+<dependency>
+    <groupId>org.apache.spark</groupId>
+    <artifactId>spark-streaming-kafka-0-10_2.12</artifactId>
+    <version>3.1.3</version>
+</dependency>
+
+  </dependencies>
+  
+ kafka-console-consumer --topic test-topic --bootstrap-server localhost:9092 --group group-a
+ 
+ 
+ package com.amex.training.kafkastreams;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.spark.SparkConf;
+import org.apache.spark.streaming.Durations;
+import org.apache.spark.streaming.api.java.JavaInputDStream;
+import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import org.apache.spark.streaming.kafka010.ConsumerStrategies;
+import org.apache.spark.streaming.kafka010.KafkaUtils;
+import org.apache.spark.streaming.kafka010.LocationStrategies;
+
+
+import scala.Tuple2;
+
+
+
+public class KafkaSparkStreamTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        String topic="test-topic";
+        String kafkaUrl="localhost:9092";
+        Map<String, Object> props=new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "group-1");
+        
+        Collection<String> topics=Collections.singletonList(topic);
+        
+        SparkConf conf=new SparkConf();
+        conf.setMaster("local[*]");
+        conf.setAppName("simple-kafka-spark-streaming-app");
+        JavaStreamingContext context=new JavaStreamingContext(conf, Durations.seconds(30));
+        context.sparkContext().setLogLevel("WARN");
+        JavaInputDStream<ConsumerRecord<String, String>> dStream=
+                KafkaUtils.createDirectStream(context, 
+                        LocationStrategies.PreferConsistent(), 
+                        ConsumerStrategies.Subscribe(topics, props));
+        
+        dStream.mapToPair(record->new Tuple2<>(record.key(),record.value()))
+        .map(t->t._2).flatMap(line->Arrays.asList(line.split(" ")).iterator())
+        .mapToPair(word->new Tuple2<>(word, 1))
+        .reduceByKey((a,b)->a+b).print();
+        context.start();
+        System.out.println("streaming started");
+        try {
+            Thread.sleep(10*60*1000);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        context.stop();
+        
+
+    }
+
+}
+
+
+package com.amex.training.kafkastreams;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.spark.SparkConf;
+import org.apache.spark.streaming.Durations;
+import org.apache.spark.streaming.api.java.JavaInputDStream;
+import org.apache.spark.streaming.api.java.JavaStreamingContext;
+import org.apache.spark.streaming.kafka010.ConsumerStrategies;
+import org.apache.spark.streaming.kafka010.KafkaUtils;
+import org.apache.spark.streaming.kafka010.LocationStrategies;
+
+
+import scala.Tuple2;
+
+
+
+public class KafkaSparkStreamETLTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        String topic="test-topic";
+        String kafkaUrl="localhost:9092";
+        Map<String, Object> props=new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaUrl);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "group-1");
+        
+        Collection<String> topics=Collections.singletonList(topic);
+        
+        SparkConf conf=new SparkConf();
+        conf.setMaster("local[*]");
+        conf.setAppName("etl-kafka-spark-streaming-app");
+        JavaStreamingContext context=new JavaStreamingContext(conf, Durations.seconds(30));
+        context.sparkContext().setLogLevel("WARN");
+        JavaInputDStream<ConsumerRecord<String, String>> dStream=
+                KafkaUtils.createDirectStream(context, 
+                        LocationStrategies.PreferConsistent(), 
+                        ConsumerStrategies.Subscribe(topics, props));
+        
+        dStream.mapToPair(record->new Tuple2<>(record.key(),record.value()))
+        .map(t->t._2).flatMap(line->Arrays.asList(line.split(" ")).iterator())
+        .mapToPair(word->new Tuple2<>(word, 1))
+        .reduceByKey((a,b)->a+b).dstream().saveAsTextFiles("c:/testkafkaout/", 
+                "-wordcount");
+        context.start();
+        System.out.println("streaming started");
+        try {
+            Thread.sleep(10*60*1000);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        context.stop();
+        
+
+    }
+
+}
+
+
+https://archive.apache.org/dist/hadoop/common/hadoop-3.2.0/hadoop-3.2.0.tar.gz
+
+ <dependencies>
+  <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-sql -->
+<dependency>
+    <groupId>org.apache.spark</groupId>
+    <artifactId>spark-sql_2.12</artifactId>
+    <version>3.1.3</version>
+  
+</dependency>
+  
+  </dependencies>
+  
+  package com.amex.training.structuredstreams;
+
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
+
+public class StructuredStreamingUtility {
+    public static StructType employeeSchema()
+    {
+        return new StructType(
+                new StructField[] {
+                new StructField("emp_id", DataTypes.IntegerType,false,
+                        Metadata.empty()),
+                new StructField("name", DataTypes.StringType,true,
+                        Metadata.empty()),
+                new StructField("designation", DataTypes.StringType,false,
+                        Metadata.empty())
+            
+                });
+    }
+
+}
+
+
+package com.amex.training.structuredstreams;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.StreamingQuery;
+import org.apache.spark.sql.streaming.Trigger;
+
+public class StructuredStreamTest1 {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("structured-stream-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        String inputDirectory="c:/structuredcsvdata/test";
+        Dataset<Row> df=spark.readStream().schema(StructuredStreamingUtility.employeeSchema())
+                .csv(inputDirectory);
+        
+        try {
+            StreamingQuery query=df.writeStream().trigger(Trigger.ProcessingTime(1,TimeUnit.MINUTES))
+                    .format("console").start();
+            System.out.println("streaming started");
+            Thread.sleep(10*60*1000);
+            query.stop();
+        } catch (TimeoutException | InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        
+    }
+
+}
+
+
+package com.amex.training.structuredstreams;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.streaming.StreamingQuery;
+import org.apache.spark.sql.streaming.Trigger;
+
+public class StructuredStreamTest1 {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkSession spark=SparkSession.builder().appName("structured-stream-test")
+                .master("local[*]").getOrCreate();
+        spark.sparkContext().setLogLevel("WARN");
+        String inputDirectory="c:/structuredcsvdata/test";
+        Dataset<Row> df=spark.readStream().schema(StructuredStreamingUtility.employeeSchema())
+                .csv(inputDirectory).select("emp_id","name");
+        
+        try {
+            StreamingQuery query=df.writeStream().trigger(Trigger.ProcessingTime(1,TimeUnit.MINUTES))
+                    .format("console").start();
+            System.out.println("streaming started");
+            Thread.sleep(10*60*1000);
+            query.stop();
+        } catch (TimeoutException | InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        
+        
+    }
+
+}
+
+create a user defined schema which represents an account as shown below.
+
+acc_no  int
+acc_type    string
+balance double
+
+The json file content format is 
+
+{"acc_no":242322,"acc_type":"SB","balance":2325.22}
+
+create a structured streaming application which reads the json files from the directory c:\structuredjsondata\test every 30 seconds
+and print the acc_no and balance in the console.
+
+
+public static StructType accountSchema()
+    {
+        return new StructType(
+                new StructField[] {
+                new StructField("acc_no", DataTypes.IntegerType,false,
+                        Metadata.empty()),
+                new StructField("acc_type", DataTypes.StringType,true,
+                        Metadata.empty()),
+                new StructField("balance", DataTypes.DoubleType,false,
+                        Metadata.empty())
+            
+                });
+    }
+    
+    

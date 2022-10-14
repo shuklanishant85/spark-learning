@@ -1,0 +1,189 @@
+foreachBatch sink:
+
+The foreachBatch sink is used if we want to store data in any arbitrary storage like NoSqlDB,RDBMS and etc.
+By using foreach and foreachBatch, we can write custom logic to store the data.
+
+for each performs custom write logic on each row.
+foreachBatch performs custom write logic on each micro batch.
+
+foreach sink:
+
+The foreach sink performs custom write logic to each record in a streaming dataframe.
+Wherever there is no support for foreachBatch, we can use foreach.
+
+foreach sink should implement an interface called ForEachWriter  which contains 3 methods.
+
+1. open---------------------------function to open connection
+2. process-----------------------writes data to the specified connection
+3. close---------------------------function to close connection
+
+
+
+Exercise
+create a user defined schema for user data as shown below:
+
+name string
+pcode long
+age int
+
+Assume that every 30 seconds, new files for user data in json format will be added to the directory c:\userdata\json.
+
+Writer a custom writer to print each row in the console as per  the following format
+
+name|age:::pcode
+
+windowing:
+
+Window operations are very similar to groupBy operations.
+In groupBy, aggregation is based on the specified group of key while in window operations, aggregation is based on event windows.
+
+Spark support 2 types of windows.
+
+1. Tumbling window
+2. Sliding window
+
+Tumbling window:
+
+Tumbling window are non overlapping which means each data point will be part of only one window.
+
+Sliding window:
+
+As its name suggests, this window will slide instead of tumbling on the data.
+We can specify the level of sliding needed.
+These are overlapping windows.
+
+
+
+ Watermarking: 
+
+Handling data that arrives outside the expected time frame.
+
+
+Machine Learning is a process of extracting patterns from your data, using statics,linear algebra and numerical optimization to make predictions.
+
+spark mllib contains machine learning apis.
+
+Training and Test Data sets:
+
+Depending on the size of your data set, you training/test ratio may vary.
+
+Many data scientists use 80/20 as a standard training/test split.
+
+In machine learning, seed value is used to generate a random number generator.
+And ,every time you use the same sameed value, you will get the same random values.
+
+After splitting our data into training and test sets, let's prepare the data to build a  model that predicts price given the number of bedrooms.
+
+Linear Regression requires that all the input features are contained within a single vector in your data frame.
+
+Transformers accept a data frame as input and retuns a new data frame with one or more columns appended
+to it. They do not learn from your data, but apply rule based transformations using the transform method.
+
+
+After setting up the vector assembler, we have our data prepared and transformed into a format that our linear regression model expects.
+
+The input column for linear regression is features which is the output from vector assembler.
+Linear regression is a type of estimator -------it takes a data frame as input and returns a model.
+
+coefficient: 
+Cofficients are the values that multiply the predictor values.
+
+suppose you have a linear regression equation y=2x+6
+
+2 is the coefficient
+x is the predictor
+6 is the constant.
+
+intercept:
+
+The regression line is a simple linear model formed using the epression
+
+
+Y=a+bX+error
+
+where  X is the input
+b is the slope of the line
+a is the intercept
+
+creating a ML pipeline:
+
+The pipelines specify the sequence of process-------------in supervised learning first transformation and next estimation.
+
+transformation is done with vector assembler
+estimation is done with linear regression.
+
+
+spark-submit --class className --master master-url --num-executors  ? --executor-cores ? --executor-memory ?    jar_file
+
+
+
+1. When we use a cluster manager like yarn, background processes like namenode,datanode,jobtracker,tasktracker and etc are running.
+
+So while specifying the num-executors , we need to make sure that we leave aside enough cores for these daemons to run smoothly.
+
+--num-executors:
+
+In this we will assume that there is one executor per core
+
+if number of cores per node is 16 and the total nodes in the cluster is 10
+
+--num-executors=16*10=160
+
+--executor-cores=1 (one exector per core)
+
+--executor-memory= amount_of_memory_per_executor
+		=mem-per-node/num-executors-per-node
+		=64GB/16= 4GB
+
+
+Recommendations:
+
+Leave 1 core per node for Hadoop/Yarn daemons
+
+Let us assign 5 core per executors==> --executor-cores=5
+
+After leaving 1 core per node for Hadoo/yarn daemons.
+number of cores available per node=16-1=15
+
+Assuming that there are 10 nodes in the cluster,
+
+Total available cores in the cluster=15*10=150
+
+Number of available executors=(total_cores/num_cores_per_executor)=150/5=30
+
+Leaving 1 executor for application manager , --num-executors=29
+
+number-of-executors-per-node=29/10~=3
+
+Memory per executor=64GB/3=21GB
+
+Counting off heap overead=7% of 21GB=3 GB
+
+so actual --executor-memory=21-3=18GB
+
+
+
+
+
+periasamy.subramanian@gmail.com
+9880372634.
+
+
+Cloudera certified hadoop and spark developer.
+
+Learning Spark by Jules Damji
+
+Spark Definitive Guide by Bill Chambers
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,366 @@
+spark-shell
+
+
+val rdd1=sc.textFile("c:/test/first.txt")
+
+
+    rdd1.collect()
+    
+    
+scala> val a=rdd1.collect()
+
+
+scala> a.foreach(println)
+
+
+ val rdd2=sc.textFile("c:/test/*.txt")
+rdd2: org.apache.spark.rdd.RDD[String] = c:/test/*.txt MapPartitionsRDD[7] at textFile at <console>:24
+
+scala> rdd2.collect
+
+<dependencies>
+  <!-- https://mvnrepository.com/artifact/org.apache.spark/spark-core -->
+<dependency>
+    <groupId>org.apache.spark</groupId>
+    <artifactId>spark-core_2.12</artifactId>
+    <version>3.1.3</version>
+</dependency>
+  
+  </dependencies>
+  
+  
+  val list=List(12,55,80,4,10)
+  
+  
+  
+  val rdd1=sc.parallelize(list)
+  
+  
+  
+   rdd1.collect()
+   
+   
+   val rdd2=rdd1.map(n=>n*2)
+   
+    rdd2.collect()
+    
+     rdd1.collect()
+     
+     
+  package com.amex.training.sparkcore;
+
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+
+public class RDDTest1 {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkConf conf=new SparkConf();
+        conf.setAppName("rdd-creation-test1");
+        conf.setMaster("local[*]");
+        JavaSparkContext sc=new JavaSparkContext(conf);
+        sc.setLogLevel("WARN");
+        
+        JavaRDD<String> rdd1=sc.textFile("c:/test/first.txt");
+        rdd1.collect().forEach(line->System.out.println(line));
+
+    }
+
+}
+
+
+
+   rdd1.count()
+   
+    rdd1.take(3)
+    
+    a
+    
+     rdd1.saveAsTextFile("c:/testout")
+      rdd1.getNumPartitions
+      
+      
+  scala> val list=List("apple","grape","pine apple","orange")
+list: List[String] = List(apple, grape, pine apple, orange)
+
+scala> val rdd1=sc.parallelize(list)
+rdd1: org.apache.spark.rdd.RDD[String] = ParallelCollectionRDD[11] at parallelize at <console>:26
+
+scala> rdd1.collect
+res13: Array[String] = Array(apple, grape, pine apple, orange)
+
+scala> val rdd2=rdd1.map(fruit=>fruit.length())
+rdd2: org.apache.spark.rdd.RDD[Int] = MapPartitionsRDD[12] at map at <console>:25
+
+scala> rdd2.collect
+res14: Array[Int] = Array(5, 5, 10, 6)
+
+scala> def findLength(fruit:String)=fruit.length()
+findLength: (fruit: String)Int
+
+scala> val rdd2=rdd1.map(findLength)
+rdd2: org.apache.spark.rdd.RDD[Int] = MapPartitionsRDD[13] at map at <console>:27
+
+scala> rdd2.collect
+
+scala> val rdd3=rdd1.map(elt=>elt.toUpperCase())
+rdd3: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[14] at map at <console>:25
+
+scala> rdd3.collect()
+
+scala> val list=List(3,5,2)
+list: List[Int] = List(3, 5, 2)
+
+scala> val rdd1=sc.parallelize(list)
+rdd1: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[15] at parallelize at <console>:26
+
+scala> val rdd2=rdd1.map(n=>n*2)
+rdd2: org.apache.spark.rdd.RDD[Int] = MapPartitionsRDD[16] at map at <console>:25
+
+scala> rdd2.collect
+res18: Array[Int] = Array(6, 10, 4)
+
+scala> val rdd3=rdd2.map(n=>n*n)
+rdd3: org.apache.spark.rdd.RDD[Int] = MapPartitionsRDD[17] at map at <console>:25
+
+scala> rdd3.collect
+res19: Array[Int] = Array(36, 100, 16)
+
+scala> rdd1.map(n=>n*2).map(n=>n*n).collect
+res20: Array[Int] = Array(36, 100, 16)
+
+scala> rdd1.map(n=>n*2).map(n=>n*n).map(n=>n+1).collect
+
+scala> val list=List(3,5,2)
+list: List[Int] = List(3, 5, 2)
+
+scala> val rdd1=sc.parallelize(list)
+rdd1: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[15] at parallelize at <console>:26
+
+scala> val rdd2=rdd1.map(n=>n*2)
+rdd2: org.apache.spark.rdd.RDD[Int] = MapPartitionsRDD[16] at map at <console>:25
+
+scala> rdd2.collect
+res18: Array[Int] = Array(6, 10, 4)
+
+scala> val rdd3=rdd2.map(n=>n*n)
+rdd3: org.apache.spark.rdd.RDD[Int] = MapPartitionsRDD[17] at map at <console>:25
+
+scala> rdd3.collect
+res19: Array[Int] = Array(36, 100, 16)
+
+scala> rdd1.map(n=>n*2).map(n=>n*n).collect
+res20: Array[Int] = Array(36, 100, 16)
+
+scala> rdd1.map(n=>n*2).map(n=>n*n).map(n=>n+1).collect
+
+package com.amex.training.sparkcore;
+
+import java.util.Arrays;
+
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+
+public class RDDTest2 {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkConf conf=new SparkConf();
+        conf.setAppName("rdd-map-test");
+        conf.setMaster("local[*]");
+        JavaSparkContext sc=new JavaSparkContext(conf);
+        sc.setLogLevel("WARN");
+        
+        JavaRDD<Integer> rdd1=sc.parallelize(Arrays.asList(3,6,7,9));
+        rdd1.map(n->n*2).map(n->n*n).map(n->n+1).foreach(n->System.out.println(n));
+
+    }
+
+}
+
+
+
+  scala> val rdd1=sc.parallelize(List(4,10,3,7,8) )
+rdd1: org.apache.spark.rdd.RDD[Int] = ParallelCollectionRDD[23] at parallelize at <console>:24
+
+scala> val rdd2=rdd1.filter(n=>n%2==0)
+rdd2: org.apache.spark.rdd.RDD[Int] = MapPartitionsRDD[24] at filter at <console>:25
+
+scala> rdd2.collect
+  
+  
+   rdd1.filter(n=>n%2==0).map(n=>n*n).collect
+   
+   scala> val list=List("this is a test","spark is fun","scala is functional")
+list: List[String] = List(this is a test, spark is fun, scala is functional)
+
+scala> val rdd1=sc.parallelize(list)
+rdd1: org.apache.spark.rdd.RDD[String] = ParallelCollectionRDD[27] at parallelize at <console>:26
+
+scala> rdd1.collect
+res24: Array[String] = Array(this is a test, spark is fun, scala is functional)
+
+scala> val rdd2=rdd1.map(line=>line.split(" "))
+rdd2: org.apache.spark.rdd.RDD[Array[String]] = MapPartitionsRDD[28] at map at <console>:25
+
+scala> rdd2.collect
+res25: Array[Array[String]] = Array(Array(this, is, a, test), Array(spark, is, fun), Array(scala, is, functional))
+
+scala> val rdd3=rdd1.flatMap(line=>line.split(" "))
+rdd3: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[29] at flatMap at <console>:25
+
+scala> rdd3.collect
+
+scala> val rdd1=sc.textFile("c:/test/first.txt")
+rdd1: org.apache.spark.rdd.RDD[String] = c:/test/first.txt MapPartitionsRDD[31] at textFile at <console>:24
+
+scala> rdd1.flatMap(line=>line.split(" ")).filter(word=>word.length()>4).map(word=>word.toUpperCase()).collect
+ilter
+  
+  scala> val list=List("dddd",23,43.66)
+list: List[Any] = List(dddd, 23, 43.66)
+
+scala> val rdd1=sc.parallelize(list)
+
+
+
+package com.amex.training.sparkcore;
+
+import java.util.Arrays;
+
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+
+public class RDDFlatMapTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkConf conf=new SparkConf();
+        conf.setAppName("rdd-flat-map-test");
+        conf.setMaster("local[*]");
+        JavaSparkContext sc=new JavaSparkContext(conf);
+        sc.setLogLevel("WARN");
+        
+        JavaRDD<String> rdd1=sc.textFile("c:/test/first.txt");
+        rdd1.flatMap(line->Arrays.asList(line.split(" ")).iterator())
+        .filter(word->word.length()>4).map(word->word.toUpperCase()).collect().
+        forEach(word->System.out.println(word));
+        
+
+    }
+
+}
+
+
+package com.amex.training.sparkcore;
+
+import java.util.Arrays;
+
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+
+public class RDDFlatMapTest {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkConf conf=new SparkConf();
+        conf.setAppName("rdd-flat-map-test");
+        conf.setMaster("local[*]");
+        JavaSparkContext sc=new JavaSparkContext(conf);
+        sc.setLogLevel("WARN");
+        
+        JavaRDD<String> rdd1=sc.textFile("c:/test/first.txt");
+        JavaRDD<String> rdd2=rdd1.repartition(4);
+        System.out.println("Total number of partitions: "+rdd2.getNumPartitions());
+        rdd1.flatMap(line->Arrays.asList(line.split(" ")).iterator())
+        .filter(word->word.length()>4).map(word->word.toUpperCase()).
+        repartition(1).saveAsTextFile("c:/testout1");
+        
+
+    }
+
+}
+
+
+the cat sat on the mat
+the aardvark sat on the sofa
+she sells the sea shells on the sea shore
+  
+  
+  
+  package com.amex.training.sparkcore;
+
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+
+public class RDDTest3 {
+
+    public static void main(String[] args) {
+        // TODO Auto-generated method stub
+        SparkConf conf=new SparkConf();
+        conf.setAppName("rdd-flat-map-test");
+        conf.setMaster("local[*]");
+        JavaSparkContext sc=new JavaSparkContext(conf);
+        sc.setLogLevel("WARN");
+        
+        JavaRDD<String> rdd1=sc.textFile("c:/test/first.txt");
+        JavaRDD<String> rdd2=rdd1.repartition(4);
+        System.out.println("Total number of partitions: "+rdd2.getNumPartitions());
+        JavaRDD<List<String>> rdd3=rdd1.map(line->Arrays.asList(line.split(" ")));
+        rdd3.collect().forEach(list->System.out.println(list));
+        
+        
+        
+
+    }
+
+}
+
+
+
+  
+  
+  http://localhost:4040/jobs/
+  
+  scala> val rdd1=sc.textFile("c:/test/first.txt")
+rdd1: org.apache.spark.rdd.RDD[String] = c:/test/first.txt MapPartitionsRDD[46] at textFile at <console>:24
+
+scala> val rdd2=rdd1.map(line=>line.toUpperCase)
+rdd2: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[47] at map at <console>:25
+
+scala>  val rdd3=rdd2.filter(line=>line.startsWith("S"))
+rdd3: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[48] at filter at <console>:25
+
+scala> val rdd4=rdd2.flatMap(line=>line.split(" "))
+rdd4: org.apache.spark.rdd.RDD[String] = MapPartitionsRDD[49] at flatMap at <console>:25
+
+scala> rdd3.collect
+
+ rdd4.collect
+ 
+ 
+ jar tvf c:\jarfiles\Test.jar
+ 
+ 
+ spark-submit --class com.amex.training.sparkcore.RDDTest1 c:\jarfiles\Test.jar
+ 
+ spark-submit --master local[*] --class com.amex.training.sparkcore.RDDTest1 c:\jarfiles\Test.jar
+ 
+ 
+  
+  
+  https://drive.google.com/drive/folders/1PM_1Mxqzf1BoKFRvr0ENMQSJ3hwAIV5k?usp=sharing
+  
+  
+  
+  
+  
